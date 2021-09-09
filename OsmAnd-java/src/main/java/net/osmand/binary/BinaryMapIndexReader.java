@@ -17,6 +17,7 @@ import net.osmand.StringMatcher;
 import net.osmand.binary.BinaryMapAddressReaderAdapter.AddressRegion;
 import net.osmand.binary.BinaryMapAddressReaderAdapter.CitiesBlock;
 import net.osmand.binary.BinaryMapPoiReaderAdapter.PoiRegion;
+import net.osmand.binary.BinaryMapPoiReaderAdapter.PoiSubType;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteRegion;
 import net.osmand.binary.BinaryMapRouteReaderAdapter.RouteSubregion;
 import net.osmand.binary.BinaryMapTransportReaderAdapter.TransportIndex;
@@ -1368,6 +1369,23 @@ public class BinaryMapIndexReader {
 			}
 		}
 		return map;
+	}
+
+	public List<PoiSubType> searchPoiSubTypesByPrefix(String query) throws IOException {
+		if (query == null || query.length() == 0) {
+			throw new IllegalArgumentException();
+		}
+		List<PoiSubType> list = new ArrayList<>();
+		for (PoiRegion poiIndex : poiIndexes) {
+			poiAdapter.initCategories(poiIndex);
+			for (int i = 0; i < poiIndex.subTypes.size(); i++) {
+				PoiSubType subType = poiIndex.subTypes.get(i);
+				if (subType.name.startsWith(query)) {
+					list.add(subType);
+				}
+			}
+		}
+		return list;
 	}
 
 	public List<Amenity> searchPoi(SearchRequest<Amenity> req) throws IOException {

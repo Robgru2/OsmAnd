@@ -27,6 +27,7 @@ import static net.osmand.plus.srtmplugin.SRTMPlugin.CONTOUR_LINES_ATTR;
 import static net.osmand.plus.srtmplugin.SRTMPlugin.CONTOUR_LINES_SCHEME_ATTR;
 import static net.osmand.plus.srtmplugin.SRTMPlugin.CONTOUR_WIDTH_ATTR;
 import static net.osmand.plus.transport.TransportLinesMenu.RENDERING_CATEGORY_TRANSPORT;
+import static net.osmand.plus.wikivoyage.data.TravelGpx.ACTIVITY_TYPE;
 import static net.osmand.render.RenderingRuleStorageProperties.A_APP_MODE;
 import static net.osmand.render.RenderingRuleStorageProperties.A_BASE_APP_MODE;
 import static net.osmand.render.RenderingRuleStorageProperties.A_ENGINE_V1;
@@ -50,6 +51,7 @@ import com.google.android.material.snackbar.Snackbar;
 import net.osmand.AndroidUtils;
 import net.osmand.IndexConstants;
 import net.osmand.PlatformUtil;
+import net.osmand.binary.BinaryMapPoiReaderAdapter.PoiSubType;
 import net.osmand.plus.ContextMenuAdapter;
 import net.osmand.plus.ContextMenuAdapter.ItemClickListener;
 import net.osmand.plus.ContextMenuAdapter.OnRowItemClick;
@@ -83,6 +85,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 public class ConfigureMapMenu {
 
@@ -249,6 +252,11 @@ public class ConfigureMapMenu {
 			}
 			customRules.remove(property);
 		}
+		ResourceManager resourceManager = activity.getMyApplication().getResourceManager();
+		Set<PoiSubType> routesTypes = resourceManager.searchPoiSubTypesByPrefix(ACTIVITY_TYPE);
+		if (OsmandPlugin.isDevelopment() && !Algorithms.isEmpty(routesTypes)) {
+			adapter.addItem(createTravelRoutesItem(activity, nightMode));
+		}
 	}
 
 	private ContextMenuItem createCycleRoutesItem(@NonNull MapActivity activity, @NonNull String attrName,
@@ -328,6 +336,43 @@ public class ConfigureMapMenu {
 						if (item != null) {
 							item.setColor(activity, isChecked ? R.color.osmand_orange : INVALID_ID);
 							item.setDescription(app.getString(isChecked ? R.string.shared_string_enabled : R.string.shared_string_disabled));
+							adapter.notifyDataSetChanged();
+						}
+						activity.refreshMap();
+						activity.updateLayers();
+						return false;
+					}
+				}).createItem();
+	}
+
+	private ContextMenuItem createTravelRoutesItem(@NonNull MapActivity activity, boolean nightMode) {
+		OsmandSettings settings = activity.getMyApplication().getSettings();
+		CommonPreference<Boolean> pref = settings.getCustomRenderBooleanProperty(TRAVEL_ROUTES);
+
+		return new ContextMenuItem.ItemBuilder()
+				.setId(ROUTES_ID + TRAVEL_ROUTES)
+				.setTitle(activity.getString(R.string.travel_routes))
+				.setIcon(getIconIdForAttr(TRAVEL_ROUTES))
+				.setSecondaryIcon(R.drawable.ic_action_additional_option)
+				.setSelected(pref.get())
+				.setColor(pref.get() ? settings.APPLICATION_MODE.get().getProfileColor(nightMode) : null)
+				.setDescription(activity.getString(pref.get() ? R.string.shared_string_enabled : R.string.shared_string_disabled))
+				.setListener(new OnRowItemClick() {
+
+					@Override
+					public boolean onRowItemClick(ArrayAdapter<ContextMenuItem> adapter, View view, int itemId, int position) {
+						activity.getDashboard().setDashboardVisibility(true, DashboardType.TRAVEL_ROUTES, AndroidUtils.getCenterViewCoordinates(view));
+						return false;
+					}
+
+					@Override
+					public boolean onContextMenuClick(ArrayAdapter<ContextMenuItem> adapter, int itemId, int position, boolean isChecked, int[] viewCoordinates) {
+						pref.set(!pref.get());
+						ContextMenuItem item = adapter.getItem(position);
+						if (item != null) {
+							item.setSelected(isChecked);
+							item.setColor(activity, isChecked ? R.color.osmand_orange : INVALID_ID);
+							item.setDescription(activity.getString(isChecked ? R.string.shared_string_enabled : R.string.shared_string_disabled));
 							adapter.notifyDataSetChanged();
 						}
 						activity.refreshMap();

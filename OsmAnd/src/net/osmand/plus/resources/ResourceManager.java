@@ -1,6 +1,8 @@
 package net.osmand.plus.resources;
 
 
+import static net.osmand.IndexConstants.VOICE_INDEX_DIR;
+
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.database.sqlite.SQLiteException;
@@ -21,6 +23,7 @@ import net.osmand.PlatformUtil;
 import net.osmand.ResultMatcher;
 import net.osmand.binary.BinaryMapIndexReader;
 import net.osmand.binary.BinaryMapIndexReader.SearchPoiTypeFilter;
+import net.osmand.binary.BinaryMapPoiReaderAdapter.PoiSubType;
 import net.osmand.binary.CachedOsmandIndexes;
 import net.osmand.data.Amenity;
 import net.osmand.data.RotatedTileBox;
@@ -69,15 +72,15 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static net.osmand.IndexConstants.VOICE_INDEX_DIR;
 
 /**
  * Resource manager is responsible to work with all resources
@@ -881,6 +884,12 @@ public class ResourceManager {
 		return warnings;
 	}
 
+	public List<String> getTravelRepositoryNames() {
+		List<String> fileNames = new ArrayList<>(travelRepositories.keySet());
+		Collections.sort(fileNames, Algorithms.getStringVersionComparator());
+		return fileNames;
+	}
+
 	public List<BinaryMapIndexReader> getTravelRepositories() {
 		List<String> fileNames = new ArrayList<>(travelRepositories.keySet());
 		Collections.sort(fileNames, Algorithms.getStringVersionComparator());
@@ -962,6 +971,18 @@ public class ResourceManager {
 			searchAmenitiesInProgress = false;
 		}
 		return amenities;
+	}
+
+	@NonNull
+	public Set<PoiSubType> searchPoiSubTypesByPrefix(@NonNull String prefix) {
+		Set<PoiSubType> poiSubTypes = new HashSet<>();
+		for (AmenityIndexRepository index : getAmenityRepositories()) {
+			if (index instanceof AmenityIndexRepositoryBinary) {
+				AmenityIndexRepositoryBinary repository = (AmenityIndexRepositoryBinary) index;
+				poiSubTypes.addAll(repository.searchPoiSubTypesByPrefix(prefix));
+			}
+		}
+		return poiSubTypes;
 	}
 
 	public List<Amenity> searchAmenitiesOnThePath(List<Location> locations, double radius, SearchPoiTypeFilter filter,
