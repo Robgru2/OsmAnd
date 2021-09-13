@@ -2,6 +2,7 @@ package net.osmand.plus.dialogs;
 
 import static net.osmand.plus.dialogs.ConfigureMapMenu.TRAVEL_ROUTES;
 import static net.osmand.plus.wikivoyage.data.TravelGpx.ACTIVITY_TYPE;
+import static net.osmand.render.RenderingRulesStorage.ORDER_RULES;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -25,10 +26,15 @@ import net.osmand.plus.activities.MapActivity;
 import net.osmand.plus.base.BaseOsmAndFragment;
 import net.osmand.plus.helpers.AndroidUiHelper;
 import net.osmand.plus.helpers.GpxUiHelper;
+import net.osmand.plus.render.RendererRegistry;
 import net.osmand.plus.settings.backend.ApplicationMode;
 import net.osmand.plus.settings.backend.CommonPreference;
 import net.osmand.plus.settings.backend.OsmandSettings;
+import net.osmand.render.RenderingRule;
+import net.osmand.render.RenderingRulesStorage;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Set;
 
 public class TravelRoutesFragment extends BaseOsmAndFragment {
@@ -103,8 +109,29 @@ public class TravelRoutesFragment extends BaseOsmAndFragment {
 		itemView.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-				pref.set(!pref.get());
+				boolean selected = !pref.get();
+				pref.set(selected);
 				setupPreferenceItem(itemView, pref, name);
+
+				RendererRegistry registry = app.getRendererRegistry();
+				RenderingRulesStorage storage = registry.getCurrentSelectedRenderer();
+
+				int tag = storage.getDictionaryValue("route");
+				int value = storage.getDictionaryValue("segment");
+
+				Map<String, String> attrsMap = new LinkedHashMap<>();
+				attrsMap.put("tag", "route");
+				attrsMap.put("value", "segment");
+				attrsMap.put("order", "-1");
+				attrsMap.put("additional", "route_activity_type=" + name);
+				RenderingRule rule = new RenderingRule(attrsMap, false, storage);
+				rule.storeAttributes(attrsMap);
+
+				RenderingRule insert = storage.getRule(ORDER_RULES, tag, value);
+				if (insert != null) {
+					String text = insert.toString();
+					insert.addToBeginIfElseChildren(rule);
+				}
 
 				MapActivity mapActivity = (MapActivity) getMyActivity();
 				if (mapActivity != null) {

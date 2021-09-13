@@ -1,5 +1,7 @@
 package net.osmand.plus.quickaction.actions;
 
+import static net.osmand.render.RenderingRulesStorage.ORDER_RULES;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.text.TextUtils;
@@ -21,12 +23,14 @@ import net.osmand.plus.quickaction.QuickActionType;
 import net.osmand.plus.quickaction.SwitchableAction;
 import net.osmand.plus.render.RendererRegistry;
 import net.osmand.plus.views.OsmandMapTileView;
+import net.osmand.render.RenderingRule;
 import net.osmand.render.RenderingRulesStorage;
 import net.osmand.util.Algorithms;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -94,12 +98,31 @@ public class MapStyleAction extends SwitchableAction<String> {
 	@Override
 	public void executeWithParams(MapActivity activity, String params) {
 		OsmandApplication app = activity.getMyApplication();
-		RenderingRulesStorage loaded = app.getRendererRegistry().getRenderer(params);
-		if (loaded != null) {
+		RenderingRulesStorage storage = app.getRendererRegistry().getRenderer(params);
+
+		if (storage != null) {
+			Map<String, String> attrsMap = new LinkedHashMap<>();
+			attrsMap.put("tag", "route");
+			attrsMap.put("value", "segment");
+			attrsMap.put("order", "-1");
+			attrsMap.put("additional", "route_activity_type=cycling");
+			RenderingRule rule = new RenderingRule(attrsMap, false, storage);
+
+			int tag = storage.getDictionaryValue("route");
+			int value = storage.getDictionaryValue("segment");
+			int key = (tag << 16) + value;
+			RenderingRule insert = storage.tagValueGlobalRules[ORDER_RULES].get(key);
+
+			if (insert != null) {
+				insert.addToBeginIfElseChildren(rule);
+			}
+		}
+
+		if (storage != null) {
 			OsmandMapTileView view = activity.getMapView();
 			view.getSettings().RENDERER.set(params);
 
-			app.getRendererRegistry().setCurrentSelectedRender(loaded);
+			app.getRendererRegistry().setCurrentSelectedRender(storage);
 			activity.refreshMapComplete();
 
 			Toast.makeText(activity, activity.getString(R.string.quick_action_map_style_switch,

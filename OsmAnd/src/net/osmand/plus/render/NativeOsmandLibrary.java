@@ -13,9 +13,9 @@ import android.graphics.Bitmap;
 
 public class NativeOsmandLibrary extends NativeLibrary {
 	private static final Log log = PlatformUtil.getLog(NativeOsmandLibrary.class);
-	
+
 	private static NativeOsmandLibrary library;
-	private static Boolean isNativeSupported = null;
+	public static Boolean isNativeSupported = null;
 
     public NativeOsmandLibrary() {
         super();
@@ -47,7 +47,7 @@ public class NativeOsmandLibrary extends NativeLibrary {
 					}
 				}
 			}
-			
+
 		}
 		return library;
 	}
@@ -56,18 +56,18 @@ public class NativeOsmandLibrary extends NativeLibrary {
 	{
 		return isNativeSupported != null && isNativeSupported;
 	}
-	
+
 	public static boolean isLoaded() {
-		return isNativeSupported != null;  
+		return isNativeSupported != null;
 	}
-	
+
 	public static boolean isNativeSupported(RenderingRulesStorage storage, OsmandApplication ctx) {
 		if(storage != null) {
 			getLibrary(storage, ctx);
 		}
 		return isSupported();
 	}
-	
+
 	public boolean useDirectRendering(){
 		return android.os.Build.VERSION.SDK_INT >= 8;
 	}
@@ -78,16 +78,16 @@ public class NativeOsmandLibrary extends NativeLibrary {
 			log.error("Error search result = null"); //$NON-NLS-1$
 			return new RenderingGenerationResult(null);
 		}
-		
+
 		// Android 2.2+
-		if(android.os.Build.VERSION.SDK_INT >= 8) { 
+		if(android.os.Build.VERSION.SDK_INT >= 8) {
 			return generateRenderingDirect(rc, searchResultHandler.nativeHandler, bitmap, render);
 		} else {
 			return generateRenderingIndirect(rc, searchResultHandler.nativeHandler, isTransparent, render, false);
 		}
 	}
 
-	
+
 	private static native RenderingGenerationResult generateRenderingDirect(RenderingContext rc, long searchResultHandler,
 			Bitmap bitmap, RenderingRuleSearchRequest render);
 }

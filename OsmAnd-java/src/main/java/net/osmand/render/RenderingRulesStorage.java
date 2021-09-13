@@ -1,6 +1,11 @@
 package net.osmand.render;
 
-import gnu.trove.map.hash.TIntObjectHashMap;
+import net.osmand.PlatformUtil;
+import net.osmand.util.Algorithms;
+
+import org.apache.commons.logging.Log;
+import org.xmlpull.v1.XmlPullParser;
+import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -16,12 +21,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Stack;
 
-import net.osmand.PlatformUtil;
-import net.osmand.util.Algorithms;
-
-import org.apache.commons.logging.Log;
-import org.xmlpull.v1.XmlPullParser;
-import org.xmlpull.v1.XmlPullParserException;
+import gnu.trove.map.hash.TIntObjectHashMap;
 
 public class RenderingRulesStorage {
 
@@ -478,9 +478,9 @@ public class RenderingRulesStorage {
 	public String getTagString(int tagValueKey){
 		return getStringValue(tagValueKey >> SHIFT_TAG_VAL); 
 	}
-	
-	protected RenderingRule getRule(int state, int itag, int ivalue){
-		if(tagValueGlobalRules[state] != null){
+
+	public RenderingRule getRule(int state, int itag, int ivalue) {
+		if (tagValueGlobalRules[state] != null) {
 			return tagValueGlobalRules[state].get((itag << SHIFT_TAG_VAL) | ivalue);
 		}
 		return null;
