@@ -32,7 +32,7 @@ public class AudioFocusHelperImpl implements AudioManager.OnAudioFocusChangeList
 	@Override
 	public boolean requestAudFocus(Context context, ApplicationMode applicationMode, int streamType) {
 		AudioManager mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-		//player = ((OsmandApplication) context.getApplication()).getRoutingHelper().getVoiceRouter().getPlayer();
+		routingHelper = ((OsmandApplication) context.getApplication()).getRoutingHelper();
 		if (android.os.Build.VERSION.SDK_INT < 26) {
 			playbackAuthorized = AudioManager.AUDIOFOCUS_REQUEST_GRANTED == mAudioManager.requestAudioFocus(this, streamType,
 					((OsmandApplication) context.getApplicationContext()).getSettings().INTERRUPT_MUSIC.getModeValue(applicationMode)
@@ -66,7 +66,7 @@ public class AudioFocusHelperImpl implements AudioManager.OnAudioFocusChangeList
 	@Override
 	public boolean abandonAudFocus(Context context, ApplicationMode applicationMode, int streamType) {
 		AudioManager mAudioManager = (AudioManager) context.getSystemService(Context.AUDIO_SERVICE);
-		//player = ((OsmandApplication) context.getApplication()).getRoutingHelper().getVoiceRouter().getPlayer();
+		routingHelper = ((OsmandApplication) context.getApplication()).getRoutingHelper();
 		playbackAuthorized = false;
 		if (android.os.Build.VERSION.SDK_INT < 26) {
 			return AudioManager.AUDIOFOCUS_REQUEST_GRANTED == mAudioManager.abandonAudioFocus(this);
@@ -97,7 +97,9 @@ public class AudioFocusHelperImpl implements AudioManager.OnAudioFocusChangeList
 				|| focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
 			//System will not automatically duck apps with AudioAttributes.CONTENT_TYPE_SPEECH and instead notify AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK to e.g. enable pausing here: 
 			playbackAuthorized = false;
-			routingHelper.getVoiceRouter().interruptRouteCommands();
+			if (routingHelper != null) {
+				routingHelper.getVoiceRouter().interruptRouteCommands();
+			}
 			//if (player != null) {
 			//	player.stop();
 			//}
