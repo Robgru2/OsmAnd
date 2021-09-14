@@ -10,6 +10,7 @@ import net.osmand.plus.settings.backend.ApplicationMode;
 import net.osmand.plus.OsmandApplication;
 //import net.osmand.plus.voice.CommandPlayer;
 //import net.osmand.plus.routing.VoiceRouter;
+import net.osmand.plus.routing.RoutingHelper;
 import org.apache.commons.logging.Log;
 
 import android.content.Context;
@@ -26,6 +27,7 @@ public class AudioFocusHelperImpl implements AudioManager.OnAudioFocusChangeList
 	public static boolean playbackAuthorized = false;
 	//private static CommandPlayer player = null;
 	private static final Log log = PlatformUtil.getLog(AudioFocusHelperImpl.class);
+	RoutingHelper routingHelper;
 
 	@Override
 	public boolean requestAudFocus(Context context, ApplicationMode applicationMode, int streamType) {
@@ -95,6 +97,7 @@ public class AudioFocusHelperImpl implements AudioManager.OnAudioFocusChangeList
 				|| focusChange == AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK) {
 			//System will not automatically duck apps with AudioAttributes.CONTENT_TYPE_SPEECH and instead notify AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK to e.g. enable pausing here: 
 			playbackAuthorized = false;
+			routingHelper.getVoiceRouter().interruptRouteCommands();
 			//if (player != null) {
 			//	player.stop();
 			//}
